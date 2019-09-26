@@ -90,7 +90,7 @@ dialog {
     margin: 1.5em;
     height: 100%;
 }
-.writing-space {
+.entry-writing-space {
     margin: 0;
     color: #1c1e29;
     letter-spacing: -0.25px;
@@ -113,6 +113,7 @@ dialog {
     word-wrap: break-word;
     word-break: break-word;
     cursor: text;
+
 }
 
 .close-button {
