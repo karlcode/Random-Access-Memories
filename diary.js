@@ -1,3 +1,4 @@
+let entryArray = []
 const storageKey = 'random-access-entry';
 const timerKey = 'random-access-entry-timer';
 
@@ -9,6 +10,7 @@ const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 
 
 chrome.storage.sync.get([storageKey], function(result) {
+    entryArray = result[storageKey]
     setupPage(result[storageKey]);
 });
 
@@ -30,11 +32,8 @@ function setupPage(entries) {
         logElement.innerHTML = `
             <header><span style="color: #36454F">${time}</span> <span style="font-size: 0.9em">${weekDay} ${day}${nth(day)} ${month} ${year}</span></header>
             <p>${log.entry}</p>
-            <button id="delete-post">Delete</button>
             `
-        element.appendChild(logElement);
-        let deletePostButton = document.getElementById("delete-post")
-        deletePostButton.addEventListener('click', deleteEntry(log.timestamp));
+        element.insertBefore(logElement, element.firstChild);
     }
 }
 
@@ -80,7 +79,6 @@ function setupFrequency(frequency) {
     });
 }
 function initPage() {
-    console.log(document)
     document.documentElement.style.height = "100%";
     document.body.style.height = "100%";
     document.documentElement.style.width = "100%";
@@ -160,24 +158,24 @@ function pushToEntries(entry) {
             result = []
         }
         result.push(entry);
+        entryArray = result;
         saveEntry(result);
     })
 }
 
 function deleteEntry(entry) {
-    console.log('delet this')
-    chrome.storage.sync.remove(entry, function() {
-        var error = chrome.runtime.lastError;
-        if (error) {
-            console.error(error);
-        }});
+    console.log(entry)
+    console.log(entryArray)
+    if (entryArray.includes(entry)) {
+
+        // create a new array without url
+        let newArray = entryArray.filter(function(item) {
+            return item !== entry;
+        });
+        console.log('asdasd', newArray)
+        // set new url list to the storage
+        chrome.storage.sync.set({[storageKey] : newArray});
+        // chrome.runtime.reload();
+    }
 }
-// function deleteEntry() {
-//     chrome.storage.sync.clear(function() {
-//         var error = chrome.runtime.lastError;
-//         if (error) {
-//             console.error(error);
-//         }
-//     });
-// }
 
