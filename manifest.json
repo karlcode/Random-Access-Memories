@@ -1,12 +1,13 @@
 {
     "name": "Random Access Memories",
     "description": "A prompt to journal your thoughts at unexpected times of the week",
-    "version": "0.1.0",
+    "version": "0.2.0",
   
     "manifest_version": 2,
     "browser_action": {
       "default_title": "Random Access Memories",
-      "default_icon": "icon.png"
+      "default_icon": "icon.png",
+      "default_popup": "popup.html"
     },
     "background": {
       "scripts": ["background.js"]

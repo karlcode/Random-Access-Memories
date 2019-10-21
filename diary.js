@@ -1,4 +1,3 @@
-let entryArray = []
 const storageKey = 'random-access-entry';
 const timerKey = 'random-access-entry-timer';
 
@@ -7,27 +6,38 @@ const monthNames = ["January", "February", "March", "April", "May", "June",
 ];
 const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 ];
+let entryArray = [];
 
+function startPage() {
+    chrome.storage.sync.get([storageKey], function (result) {
+        entryArray = result[storageKey]
+        setupPage(result[storageKey]);
+    });
+}
 
-chrome.storage.sync.get([storageKey], function(result) {
-    entryArray = result[storageKey]
-    setupPage(result[storageKey]);
-});
+startPage();
 
 function setupPage(entries) {
     let element = document.getElementById("entry-holder");
     let newPostButton = document.getElementById("new-post");
     newPostButton.addEventListener('click', newPost);
 
-    for(let log of entries) {
+    for (let log of entries) {
         let logElement = document.createElement("article");
         let date = new Date(log.timestamp);
         let month = monthNames[date.getMonth()];
         let day = date.getDate();
         let weekDay = weekDays[date.getDay()];
         let year = date.getFullYear();
-        let options = { hour: 'numeric', minute: 'numeric', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        let time = date.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+        let options = {
+            hour: 'numeric',
+            minute: 'numeric',
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        let time = date.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true});
 
         logElement.innerHTML = `
             <header><span style="color: #36454F">${time}</span> <span style="font-size: 0.9em">${weekDay} ${day}${nth(day)} ${month} ${year}</span></header>
@@ -39,24 +49,34 @@ function setupPage(entries) {
 
 function nth(day) {
     if (day > 3 && day < 21) return 'th';
-    switch(day % 10) {
-        case 1: return 'st';
-        case 2: return 'nd';
-        case 3: return 'rd';
-        default: return 'th';
+    switch (day % 10) {
+        case 1:
+            return 'st';
+        case 2:
+            return 'nd';
+        case 3:
+            return 'rd';
+        default:
+            return 'th';
     }
 }
 
 function newPost() {
     initPage();
 }
-// Waiting for DOM to load since extension runs on document_start
-document.addEventListener('DOMContentLoaded', initPage
-, false);
 
+// Waiting for DOM to load since extension runs on document_start
+document.addEventListener('DOMContentLoaded', setupInit
+    , false);
+
+function setupInit() {
+    if (Math.random() < 0.5) {
+        initPage()
+    }
+}
 
 function setupFrequency(frequency) {
-    chrome.storage.sync.get([timerKey], function(result) {
+    chrome.storage.sync.get([timerKey], function (result) {
         if (!result) {
             result[timerKey] = new Date().getDate();
         }
@@ -65,19 +85,19 @@ function setupFrequency(frequency) {
         // if (result[timerKey] !== new Date().getDate()) {
         //     initPage();
         // }
-        if(result[timerKey]) {
-            setInterval(function(){ // Set interval for checking
-                if(result[timerKey].getHours() >= 8 && result[timerKey].getHours()  <= 24){ // Check the time if its within this range
+        if (result[timerKey]) {
+            setInterval(function () { // Set interval for checking
+                if (result[timerKey].getHours() >= 8 && result[timerKey].getHours() <= 24) { // Check the time if its within this range
                     console.log('its time')
-                }
-                else {
+                } else {
                     console.log('not time yet')
                 }
-            }, 1000*60*60*frequency); //itll check once every freq hours, then itll run the inside function
+            }, 1000 * 60 * 60 * frequency); //itll check once every freq hours, then itll run the inside function
         }
         resetTime()
     });
 }
+
 function initPage() {
     document.documentElement.style.height = "100%";
     document.body.style.height = "100%";
@@ -90,7 +110,7 @@ function initPage() {
 
     const modal = document.createElement("dialog");
     const currentTime = new Date();
-    let options = { hour: 'numeric', minute: 'numeric', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    let options = {hour: 'numeric', minute: 'numeric', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
     modal.innerHTML = `
     <div class="flex-container">
     <span class="time-heading">${currentTime.toLocaleDateString("en-US", options)}</span>
@@ -115,7 +135,7 @@ function initPage() {
     let submitButton = dialog.querySelector("#submit-entry-button")
     let inputSpace = shadowRoot.getElementById('lit-writing-area');
     inputSpace.oninput = (e) => {
-        if(inputSpace.innerHTML.length > 300) {
+        if (inputSpace.innerHTML.length > 300) {
             inputSpace.style.color = 'tomato';
             submitButton.setAttribute("disabled", true)
         } else {
@@ -136,25 +156,27 @@ function initPage() {
 
 function resetTime() {
     let date = new Date().getDate();
-    chrome.storage.sync.set({[timerKey] : date}, function(){
+    chrome.storage.sync.set({[timerKey]: date}, function () {
     });
 }
 
 function saveEntry(input) {
-    chrome.storage.sync.set({[storageKey] : input}, function(){
+    chrome.storage.sync.set({[storageKey]: input}, function () {
         if (chrome.runtime.lastError)
             alert("Error: unable to create post")
     });
+    startPage()
 }
+
 function getEntries(callback) {
-    chrome.storage.sync.get([storageKey], function(result) {
+    chrome.storage.sync.get([storageKey], function (result) {
         callback(result[storageKey])
     })
 }
 
 function pushToEntries(entry) {
-    getEntries(function(result) {
-        if(!result) {
+    getEntries(function (result) {
+        if (!result) {
             result = []
         }
         result.push(entry);
@@ -169,13 +191,16 @@ function deleteEntry(entry) {
     if (entryArray.includes(entry)) {
 
         // create a new array without url
-        let newArray = entryArray.filter(function(item) {
+        let newArray = entryArray.filter(function (item) {
             return item !== entry;
         });
         console.log('asdasd', newArray)
         // set new url list to the storage
-        chrome.storage.sync.set({[storageKey] : newArray});
+        chrome.storage.sync.set({[storageKey]: newArray});
         // chrome.runtime.reload();
     }
 }
 
+document.getElementById("qweqwe").addEventListener("click", (e) => {
+    console.log(e)
+})
