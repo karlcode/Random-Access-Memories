@@ -8,19 +8,20 @@ const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 ];
 let entryArray = [];
 
-function startPage() {
+function initEntriesPage() {
     chrome.storage.sync.get([storageKey], function (result) {
         entryArray = result[storageKey]
-        setupPage(result[storageKey]);
+        setupEntriesPage(result[storageKey]);
     });
 }
+initEntriesPage();
 
-startPage();
 
-function setupPage(entries) {
+function setupEntriesPage(entries) {
     let element = document.getElementById("entry-holder");
     let newPostButton = document.getElementById("new-post");
-    newPostButton.addEventListener('click', newPost);
+    newPostButton.addEventListener('click', () => initialiseModal());
+
 
     for (let log of entries) {
         let logElement = document.createElement("article");
@@ -42,7 +43,11 @@ function setupPage(entries) {
         logElement.innerHTML = `
             <header><span style="color: #36454F">${time}</span> <span style="font-size: 0.9em">${weekDay} ${day}${nth(day)} ${month} ${year}</span></header>
             <p>${log.entry}</p>
+            <button id="delete-post">Delet this</button>
             `
+        const deletePost = document.getElementById("delete-post");
+        if(deletePost) deletePost.addEventListener('click', () => deleteEntry(log));
+
         element.insertBefore(logElement, element.firstChild);
     }
 }
@@ -61,44 +66,31 @@ function nth(day) {
     }
 }
 
-function newPost() {
-    initPage();
-}
-
+// Actual Modal element that will run on random freq
 // Waiting for DOM to load since extension runs on document_start
-document.addEventListener('DOMContentLoaded', setupInit
+document.addEventListener('DOMContentLoaded', setupModal
     , false);
 
-function setupInit() {
-    if (Math.random() < 0.5) {
-        initPage()
-    }
-}
-
-function setupFrequency(frequency) {
+function setupModal() {
+    // Run the modal according to a schedule or predefined frequency
     chrome.storage.sync.get([timerKey], function (result) {
         if (!result) {
             result[timerKey] = new Date().getDate();
         }
-        console.log(result[timerKey]);
-
-        // if (result[timerKey] !== new Date().getDate()) {
-        //     initPage();
-        // }
-        if (result[timerKey]) {
-            setInterval(function () { // Set interval for checking
-                if (result[timerKey].getHours() >= 8 && result[timerKey].getHours() <= 24) { // Check the time if its within this range
-                    console.log('its time')
-                } else {
-                    console.log('not time yet')
-                }
-            }, 1000 * 60 * 60 * frequency); //itll check once every freq hours, then itll run the inside function
+        if (result[timerKey] !== new Date().getDate()) {
+            initialiseModal();
+            resetTime();
         }
-        resetTime()
     });
 }
 
-function initPage() {
+function resetTime() {
+    let date = new Date().getDate();
+    chrome.storage.sync.set({[timerKey]: date}, function () {
+    });
+}
+
+function initialiseModal() {
     document.documentElement.style.height = "100%";
     document.body.style.height = "100%";
     document.documentElement.style.width = "100%";
@@ -154,18 +146,13 @@ function initPage() {
     }, true));
 }
 
-function resetTime() {
-    let date = new Date().getDate();
-    chrome.storage.sync.set({[timerKey]: date}, function () {
-    });
-}
 
 function saveEntry(input) {
     chrome.storage.sync.set({[storageKey]: input}, function () {
         if (chrome.runtime.lastError)
             alert("Error: unable to create post")
     });
-    startPage()
+    initEntriesPage()
 }
 
 function getEntries(callback) {
@@ -194,13 +181,9 @@ function deleteEntry(entry) {
         let newArray = entryArray.filter(function (item) {
             return item !== entry;
         });
-        console.log('asdasd', newArray)
+        console.log('asdasd', newArray);
         // set new url list to the storage
         chrome.storage.sync.set({[storageKey]: newArray});
         // chrome.runtime.reload();
     }
 }
-
-document.getElementById("qweqwe").addEventListener("click", (e) => {
-    console.log(e)
-})

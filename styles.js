@@ -149,4 +149,5 @@ dialog {
 .submit-button:hover {
     background: aquamarine;
 }
-</style>`
+
+</style>`;
